@@ -3,11 +3,16 @@ const path = require("path");
 const bodyParser = require("body-parser");
 const cookieParser = require("cookie-parser");
 const fileUpload = require("express-fileupload");
+const cors = require("cors");
 
 const app = express();
 
+// Serve static demo page
+app.use('/demo', express.static(path.join(__dirname, 'public')));
+
 // config
 require('dotenv').config();
+app.use(cors()); // Enable CORS for demo
 app.use(express.json({ limit: '10kb' })); // Prevent payload bombs
 app.use(cookieParser());
 app.use(bodyParser.urlencoded({ extended: true }));

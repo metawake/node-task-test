@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Notes API Demo</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 20px;
+      background: #0f172a;
+      color: #e2e8f0;
+    }
+    h1 { color: #38bdf8; margin-bottom: 8px; }
+    .subtitle { color: #64748b; margin-bottom: 24px; }
+    .section { 
+      background: #1e293b; 
+      border-radius: 12px; 
+      padding: 20px; 
+      margin-bottom: 16px;
+    }
+    .section h3 { color: #38bdf8; margin-top: 0; }
+    button {
+      background: #3b82f6;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      margin-right: 8px;
+      margin-bottom: 8px;
+    }
+    button:hover { background: #2563eb; }
+    button.danger { background: #ef4444; }
+    button.danger:hover { background: #dc2626; }
+    button.success { background: #22c55e; }
+    input, textarea {
+      background: #0f172a;
+      border: 1px solid #334155;
+      color: #e2e8f0;
+      padding: 10px;
+      border-radius: 6px;
+      width: 100%;
+      margin-bottom: 10px;
+    }
+    textarea { min-height: 80px; resize: vertical; }
+    #output {
+      background: #020617;
+      border-radius: 8px;
+      padding: 16px;
+      font-family: 'Monaco', 'Menlo', monospace;
+      font-size: 13px;
+      white-space: pre-wrap;
+      word-break: break-all;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+    .log-entry { margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid #1e293b; }
+    .log-entry:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+    .method { font-weight: bold; }
+    .method.GET { color: #22c55e; }
+    .method.POST { color: #eab308; }
+    .method.PUT { color: #3b82f6; }
+    .method.DELETE { color: #ef4444; }
+    .url { color: #94a3b8; }
+    .status-200, .status-201 { color: #22c55e; }
+    .status-400, .status-404 { color: #ef4444; }
+    .response { color: #cbd5e1; margin-top: 4px; }
+    .endpoint { 
+      background: #334155; 
+      padding: 4px 8px; 
+      border-radius: 4px; 
+      font-family: monospace;
+      font-size: 12px;
+    }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    @media (max-width: 600px) { .grid { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <h1>📝 Notes API Demo</h1>
+  <p class="subtitle">RESTful CRUD API with UUID IDs, input validation, and API versioning</p>
+
+  <div class="grid">
+    <div class="section">
+      <h3>Create Note</h3>
+      <input type="text" id="title" placeholder="Title">
+      <textarea id="content" placeholder="Content"></textarea>
+      <button class="success" onclick="createNote()">POST /api/v1/notes</button>
+    </div>
+
+    <div class="section">
+      <h3>Read Notes</h3>
+      <button onclick="getAllNotes()">GET /api/v1/notes</button>
+      <br><br>
+      <input type="text" id="getNoteId" placeholder="Note UUID">
+      <button onclick="getNoteById()">GET /api/v1/notes/:id</button>
+    </div>
+
+    <div class="section">
+      <h3>Update Note</h3>
+      <input type="text" id="updateId" placeholder="Note UUID">
+      <input type="text" id="updateTitle" placeholder="New Title">
+      <button onclick="updateNote()">PUT /api/v1/notes/:id</button>
+    </div>
+
+    <div class="section">
+      <h3>Delete Note</h3>
+      <input type="text" id="deleteId" placeholder="Note UUID">
+      <button class="danger" onclick="deleteNote()">DELETE /api/v1/notes/:id</button>
+    </div>
+  </div>
+
+  <div class="section">
+    <h3>🧪 Quick Tests</h3>
+    <button onclick="testInvalidId()">Test Invalid ID (400)</button>
+    <button onclick="testNotFound()">Test Not Found (404)</button>
+    <button onclick="clearOutput()">Clear Log</button>
+  </div>
+
+  <div class="section">
+    <h3>Response Log</h3>
+    <div id="output"><span style="color:#64748b">Click a button to make an API request...</span></div>
+  </div>
+
+  <script>
+    const API = 'http://localhost:4000/api/v1/notes';
+    const output = document.getElementById('output');
+
+    function log(method, url, status, data) {
+      const entry = document.createElement('div');
+      entry.className = 'log-entry';
+      entry.innerHTML = `<span class="method ${method}">${method}</span> <span class="url">${url}</span> → <span class="status-${status}">${status}</span>\n<span class="response">${JSON.stringify(data, null, 2)}</span>`;
+      output.insertBefore(entry, output.firstChild);
+    }
+
+    async function apiCall(method, url, body = null) {
+      const opts = { method, headers: { 'Content-Type': 'application/json' } };
+      if (body) opts.body = JSON.stringify(body);
+      const res = await fetch(url, opts);
+      const data = await res.json();
+      log(method, url.replace(API, '/api/v1/notes'), res.status, data);
+      return data;
+    }
+
+    async function createNote() {
+      const title = document.getElementById('title').value || 'Untitled';
+      const content = document.getElementById('content').value || '';
+      const data = await apiCall('POST', API, { title, content });
+      if (data.note) {
+        document.getElementById('getNoteId').value = data.note.id;
+        document.getElementById('updateId').value = data.note.id;
+        document.getElementById('deleteId').value = data.note.id;
+      }
+    }
+
+    function getAllNotes() { apiCall('GET', API); }
+    
+    function getNoteById() {
+      const id = document.getElementById('getNoteId').value;
+      apiCall('GET', `${API}/${id}`);
+    }
+
+    function updateNote() {
+      const id = document.getElementById('updateId').value;
+      const title = document.getElementById('updateTitle').value;
+      apiCall('PUT', `${API}/${id}`, { title });
+    }
+
+    function deleteNote() {
+      const id = document.getElementById('deleteId').value;
+      apiCall('DELETE', `${API}/${id}`);
+    }
+
+    function testInvalidId() { apiCall('GET', `${API}/not-a-valid-uuid`); }
+    function testNotFound() { apiCall('GET', `${API}/550e8400-e29b-41d4-a716-446655440000`); }
+    function clearOutput() { output.innerHTML = '<span style="color:#64748b">Log cleared...</span>'; }
+
+    // Load notes on page load
+    getAllNotes();
+  </script>
+</body>
+</html>
+
+
