@@ -14,8 +14,9 @@ const sanitizeNote = (title, content) => {
   return { title: cleanTitle, content: cleanContent };
 };
 
-// Validate ID is a positive integer (fail fast on bad input)
-const isValidId = (id) => /^\d+$/.test(id) && Number(id) > 0;
+// Validate UUID format (fail fast on bad input)
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const isValidId = (id) => UUID_REGEX.test(id);
 
 // POST /notes - Create a new note
 exports.createNote = (req, res) => {

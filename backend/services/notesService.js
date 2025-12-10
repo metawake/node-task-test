@@ -4,14 +4,15 @@
  * TODO: Add mutex/locking if we ever run multiple instances
  */
 
+const { v4: uuidv4 } = require('uuid');
+
 class NotesService {
   constructor() {
     this.notes = new Map();
-    this.nextId = 1;
   }
 
   createNote({ title, content }) {
-    const id = this.nextId++;
+    const id = uuidv4();
     const now = new Date().toISOString();
     
     const note = {
@@ -31,23 +32,23 @@ class NotesService {
   }
 
   getNoteById(id) {
-    return this.notes.get(Number(id)) || null;
+    return this.notes.get(id) || null;
   }
 
   updateNote(id, { title, content }) {
-    const note = this.notes.get(Number(id));
+    const note = this.notes.get(id);
     if (!note) return null;
 
     if (title !== undefined) note.title = title;
     if (content !== undefined) note.content = content;
     note.updatedAt = new Date().toISOString();
 
-    this.notes.set(Number(id), note);
+    this.notes.set(id, note);
     return note;
   }
 
   deleteNote(id) {
-    return this.notes.delete(Number(id));
+    return this.notes.delete(id);
   }
 }
 

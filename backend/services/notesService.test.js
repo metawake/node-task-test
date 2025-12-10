@@ -16,17 +16,17 @@ console.log('✓ Created note:', note2);
 const all = notesService.getAllNotes();
 console.log('✓ Get all notes:', all.length, 'notes');
 
-// Test getById
-const found = notesService.getNoteById(1);
-console.log('✓ Get by ID 1:', found ? found.title : 'not found');
+// Test getById (using UUID from created note)
+const found = notesService.getNoteById(note1.id);
+console.log('✓ Get by ID:', found ? found.title : 'not found');
 
 // Test update
-const updated = notesService.updateNote(1, { title: 'Updated title' });
-console.log('✓ Updated note 1:', updated ? updated.title : 'failed');
+const updated = notesService.updateNote(note1.id, { title: 'Updated title' });
+console.log('✓ Updated note:', updated ? updated.title : 'failed');
 
 // Test delete
-const deleted = notesService.deleteNote(2);
-console.log('✓ Deleted note 2:', deleted);
+const deleted = notesService.deleteNote(note2.id);
+console.log('✓ Deleted note:', deleted);
 
 // Verify delete
 const afterDelete = notesService.getAllNotes();

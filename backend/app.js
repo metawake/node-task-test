@@ -8,7 +8,7 @@ const app = express();
 
 // config
 require('dotenv').config();
-app.use(express.json());
+app.use(express.json({ limit: '10kb' })); // Prevent payload bombs
 app.use(cookieParser());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(fileUpload());
@@ -23,7 +23,7 @@ app.use('/api/user', user);
 app.use('/api/product', product);
 app.use('/api/order', order);
 app.use('/api/payment', payment);
-app.use('/api/notes', notes);
+app.use('/api/v1/notes', notes); // Versioned API
 
 // deployment
 __dirname = path.resolve();
