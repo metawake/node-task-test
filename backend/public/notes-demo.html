@@ -164,7 +164,10 @@
         <div style="background:#0f172a;border-radius:8px;padding:12px;margin-bottom:8px;border-left:3px solid #3b82f6">
           <div style="display:flex;justify-content:space-between;align-items:start">
             <strong style="color:#f1f5f9">${escapeHtml(note.title)}</strong>
-            <code style="font-size:11px;color:#64748b;cursor:pointer" onclick="copyId('${note.id}')" title="Click to copy">${note.id.slice(0,8)}...</code>
+            <div>
+              <code style="font-size:11px;color:#64748b;cursor:pointer;margin-right:8px" onclick="copyId('${note.id}')" title="Click to copy">${note.id.slice(0,8)}...</code>
+              <button onclick="quickDelete('${note.id}')" style="background:#ef4444;color:white;border:none;padding:2px 8px;border-radius:4px;font-size:11px;cursor:pointer">✕</button>
+            </div>
           </div>
           <div style="color:#94a3b8;font-size:13px;margin-top:4px;white-space:pre-wrap">${escapeHtml(note.content) || '<em>No content</em>'}</div>
           <div style="font-size:11px;color:#475569;margin-top:8px">
@@ -185,6 +188,11 @@
       document.getElementById('getNoteId').value = id;
       document.getElementById('updateId').value = id;
       document.getElementById('deleteId').value = id;
+    }
+
+    async function quickDelete(id) {
+      await apiCall('DELETE', `${API}/${id}`);
+      refreshNotes();
     }
 
     async function refreshNotes() {
@@ -209,18 +217,21 @@
     function getAllNotes() { apiCall('GET', API); }
     
     function getNoteById() {
-      const id = document.getElementById('getNoteId').value;
+      const id = document.getElementById('getNoteId').value.trim();
+      if (!id) { alert('Please enter a Note UUID'); return; }
       apiCall('GET', `${API}/${id}`);
     }
 
     function updateNote() {
-      const id = document.getElementById('updateId').value;
+      const id = document.getElementById('updateId').value.trim();
+      if (!id) { alert('Please enter a Note UUID'); return; }
       const title = document.getElementById('updateTitle').value;
       apiCall('PUT', `${API}/${id}`, { title }).then(() => refreshNotes());
     }
 
     function deleteNote() {
-      const id = document.getElementById('deleteId').value;
+      const id = document.getElementById('deleteId').value.trim();
+      if (!id) { alert('Please enter a Note UUID'); return; }
       apiCall('DELETE', `${API}/${id}`).then(() => refreshNotes());
     }
 
