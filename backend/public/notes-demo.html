@@ -85,6 +85,11 @@
   <h1>📝 Notes API Demo</h1>
   <p class="subtitle">RESTful CRUD API with UUID IDs, input validation, and API versioning</p>
 
+  <div class="section">
+    <h3>📋 All Notes <button onclick="refreshNotes()" style="font-size:12px;padding:5px 10px;margin-left:10px">Refresh</button></h3>
+    <div id="notesList"><em style="color:#64748b">Loading...</em></div>
+  </div>
+
   <div class="grid">
     <div class="section">
       <h3>Create Note</h3>
@@ -147,6 +152,46 @@
       return data;
     }
 
+    const notesList = document.getElementById('notesList');
+
+    // Render all notes in the list area
+    function renderNotes(notes) {
+      if (!notes || notes.length === 0) {
+        notesList.innerHTML = '<em style="color:#64748b">No notes yet. Create one!</em>';
+        return;
+      }
+      notesList.innerHTML = notes.map(note => `
+        <div style="background:#0f172a;border-radius:8px;padding:12px;margin-bottom:8px;border-left:3px solid #3b82f6">
+          <div style="display:flex;justify-content:space-between;align-items:start">
+            <strong style="color:#f1f5f9">${escapeHtml(note.title)}</strong>
+            <code style="font-size:11px;color:#64748b;cursor:pointer" onclick="copyId('${note.id}')" title="Click to copy">${note.id.slice(0,8)}...</code>
+          </div>
+          <div style="color:#94a3b8;font-size:13px;margin-top:4px;white-space:pre-wrap">${escapeHtml(note.content) || '<em>No content</em>'}</div>
+          <div style="font-size:11px;color:#475569;margin-top:8px">
+            Created: ${new Date(note.createdAt).toLocaleString()}
+            ${note.updatedAt !== note.createdAt ? ' • Updated: ' + new Date(note.updatedAt).toLocaleString() : ''}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    function copyId(id) {
+      navigator.clipboard.writeText(id);
+      document.getElementById('getNoteId').value = id;
+      document.getElementById('updateId').value = id;
+      document.getElementById('deleteId').value = id;
+    }
+
+    async function refreshNotes() {
+      const data = await apiCall('GET', API);
+      if (data.notes) renderNotes(data.notes);
+    }
+
     async function createNote() {
       const title = document.getElementById('title').value || 'Untitled';
       const content = document.getElementById('content').value || '';
@@ -155,6 +200,9 @@
         document.getElementById('getNoteId').value = data.note.id;
         document.getElementById('updateId').value = data.note.id;
         document.getElementById('deleteId').value = data.note.id;
+        document.getElementById('title').value = '';
+        document.getElementById('content').value = '';
+        refreshNotes();
       }
     }
 
@@ -168,12 +216,12 @@
     function updateNote() {
       const id = document.getElementById('updateId').value;
       const title = document.getElementById('updateTitle').value;
-      apiCall('PUT', `${API}/${id}`, { title });
+      apiCall('PUT', `${API}/${id}`, { title }).then(() => refreshNotes());
     }
 
     function deleteNote() {
       const id = document.getElementById('deleteId').value;
-      apiCall('DELETE', `${API}/${id}`);
+      apiCall('DELETE', `${API}/${id}`).then(() => refreshNotes());
     }
 
     function testInvalidId() { apiCall('GET', `${API}/not-a-valid-uuid`); }
@@ -181,7 +229,7 @@
     function clearOutput() { output.innerHTML = '<span style="color:#64748b">Log cleared...</span>'; }
 
     // Load notes on page load
-    getAllNotes();
+    refreshNotes();
   </script>
 </body>
 </html>
